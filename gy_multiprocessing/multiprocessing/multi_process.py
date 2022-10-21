@@ -102,3 +102,9 @@ class MultiProcess:
 
             # check every 2 seconds
             time.sleep(2)
+
+        return {
+            'process_list': process_list,
+            'start_time': self.start_time,
+            'process_result_list': []
+        }
