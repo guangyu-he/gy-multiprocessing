@@ -25,6 +25,8 @@ class MultiProcess:
 
         process_list = self.process_list
         process_result_list = self.process_result_list
+        if additional_dict is None:
+            additional_dict = {'name': ""}
 
         # initialize multiprocessing for core loop function
         process = multiprocessing.Process(target=func, args=func_args)
@@ -113,3 +115,9 @@ class MultiProcess:
 
             # check every 2 seconds
             time.sleep(2)
+
+        return {
+            'process_list': process_list,
+            'start_time': self.start_time,
+            'process_result_list': process_result_list
+        }

@@ -19,6 +19,8 @@ class MultiProcess:
     def start_process(self, func, func_args: tuple, additional_dict: dict = None) -> (list, list):
 
         process_list = self.process_list
+        if additional_dict is None:
+            additional_dict = {'name': ""}
 
         # initialize multiprocessing for core loop function
         process = multiprocessing.Process(target=func, args=func_args)
