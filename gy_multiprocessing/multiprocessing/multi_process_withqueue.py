@@ -3,30 +3,36 @@ import time
 
 
 class MultiProcess:
-    def __init__(self, init: dict, outer_loop_times: int, max_threads: int = multiprocessing.cpu_count(),
-                 timeout: int = 2 * 60):
+    def __init__(self, init: dict, outer_loop_times: int, current_loop_index: int, process_name: str = "",
+                 max_threads: int = multiprocessing.cpu_count(), timeout: int = 2 * 60, process_log: bool = False):
         # set max processing pool equals to the cpu core number
         self.max_threads = max_threads
         # every single process could only have 2 min runtime
         self.timeout = timeout
         # a processing list
         self.process_list = init['process_list']
-        # start timing for main loop
-        self.start_time = init['start_time']
         # a corresponding list of returned values
         self.process_result_list = init['process_result_list']
+        # start timing for main loop
+        self.start_time = init['start_time']
+        # outer loop times
+        self.outer_loop_times = outer_loop_times
+        # current loop index
+        self.current_loop_index = current_loop_index
+        # process name
+        self.process_name = process_name
+        # showing process log when closing to end
+        self.process_log = process_log
+
         # a get context method for get return value
+        # NOTE! a q.put() method must include in the called func
         self.ctx = multiprocessing.get_context('spawn')
         self.q = self.ctx.Queue()
 
-        self.outer_loop_times = outer_loop_times
-
-    def start_process(self, func, func_args: tuple, additional_dict: dict = None) -> (list, list):
+    def start_process(self, func, func_args: tuple) -> (list, list):
 
         process_list = self.process_list
         process_result_list = self.process_result_list
-        if additional_dict is None:
-            additional_dict = {'name': ""}
 
         # initialize multiprocessing for core loop function
         process = multiprocessing.Process(target=func, args=func_args)
@@ -36,36 +42,37 @@ class MultiProcess:
 
         # set dict inside the process list
         process_list_dict = {'process': process, 'start_time': process_start_time}
-        if additional_dict is not None:
-            process_list_dict.update(additional_dict)
         process_list.append(process_list_dict)
 
         # start the process
         process.start()
-        print(f"process: {str(process.name)} with {additional_dict} starts")
-
         # append the possible returned value in the result list
         process_result_list.append(self.q)
 
-        return process_list, process_result_list
+        print(f"process: {str(process_list_dict['process'].name)} with {self.process_name} starts") \
+            if self.process_name is not "" else \
+            print(f"process: {str(process_list_dict['process'].name)} starts")
 
-    def runtime(self, func, func_args: tuple, outer_loop_index: int, additional_dict: dict = None,
-                process_log: bool = False):
+        return process_list
 
-        process_list, process_result_list = self.start_process(func, func_args + (self.q,), additional_dict)
+    def run(self, func, func_args: tuple):
+
+        process_list, process_result_list = self.start_process(func, func_args + (self.q,))
 
         while True:
             # while loop for setting max process to max_threads
 
             if len(self.process_list) < self.max_threads \
-                    and outer_loop_index > self.outer_loop_times - self.max_threads \
-                    and process_log:
+                    and self.current_loop_index > self.outer_loop_times - self.max_threads \
+                    and self.process_log:
                 # if the process is ending with less than max_threads undergoing processes
                 # print current processes
-
                 for each_process in process_list:
                     print(
-                        f"{each_process['process'].name}, runtime: {format(time.time() - each_process['start_time'], '.1f')}s, name: {each_process['name']}")
+                        f"{each_process['process'].name}, runtime: {format(time.time() - each_process['start_time'], '.1f')}s, name: {self.process_name}") \
+                        if self.process_name is not "" else \
+                        print(
+                            f"{each_process['process'].name}, runtime: {format(time.time() - each_process['start_time'], '.1f')}s")
                 print("-----")
 
             if process_list:
@@ -80,7 +87,10 @@ class MultiProcess:
                         # if any process is dead
                         time_cost = current_time - each_process['start_time']
                         print(
-                            f"process: {str(each_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_process['name']}: {process_result_list[index].get()}")
+                            f"process: {str(each_process['process'].name)} done in: {format(time_cost, '.1f')}s with {self.process_name}: {process_result_list[index].get()}") \
+                            if self.process_name is not "" else \
+                            print(
+                                f"process: {str(each_process['process'].name)} done in: {format(time_cost, '.1f')}s with: {process_result_list[index].get()}")
                         try:
                             each_process['process'].terminate()
                             each_process['process'].close()
@@ -90,22 +100,28 @@ class MultiProcess:
                         process_result_list.pop(index)
                     elif time_cost >= self.timeout:
                         # or any process takes too long to finish (longer than the timeout)
+                        # TODO! not working perfectly, one time out will cause all processes to terminate?
                         print(
-                            f"process: {str(each_process['process'].name)} with name: {each_process['name']} is terminated due to timeout")
+                            f"process: {str(each_process['process'].name)} with {self.process_name} is terminated due to timeout") \
+                            if self.process_name is not "" else \
+                            print(
+                                f"process: {str(each_process['process'].name)} is terminated due to timeout")
                         try:
-                            # TODO! not working perfectly, one time out will cause all processes to terminate?
                             each_process['process'].terminate()
                             each_process['process'].close()
                         except ValueError:
+
                             pass
                         process_list.pop(index)
                         process_result_list.pop(index)
                     elif time_cost >= self.timeout - 10:
                         # only 10s to timeout
                         print(
-                            f"process: {str(each_process['process'].name)} closing to timeout with name: {each_process['name']}")
+                            f"process: {str(each_process['process'].name)} closing to timeout with name: {self.process_name}") \
+                            if self.process_name is not "" else \
+                            print(f"process: {str(each_process['process'].name)} closing to timeout")
 
-                if len(process_list) < self.max_threads and outer_loop_index != self.outer_loop_times - 1:
+                if len(process_list) < self.max_threads and self.current_loop_index != self.outer_loop_times - 1:
                     # if all tasks are in the pool then wait until all tasks are finished
                     # or break the loop to add a new task in the pool
                     break
