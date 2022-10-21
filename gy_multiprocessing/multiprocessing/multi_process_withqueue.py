@@ -53,7 +53,7 @@ class MultiProcess:
             if self.process_name is not "" else \
             print(f"process: {str(process_list_dict['process'].name)} starts")
 
-        return process_list
+        return process_list, process_result_list
 
     def run(self, func, func_args: tuple):
 
