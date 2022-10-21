@@ -5,7 +5,7 @@ with open('README.md') as fh:
 
 setup(
     name="gy_multiprocessing",
-    version="0.0.2",
+    version="0.1.0",
     author="Guangyu He",
     author_email="me@heguangyu.net",
     description="Run function in multiple processes",
