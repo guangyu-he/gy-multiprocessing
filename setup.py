@@ -4,7 +4,7 @@ with open('README.md') as fh:
     long_description = fh.read()
 
 setup(
-    name="gy-multiprocessing",
+    name="gy_multiprocessing",
     version="0.0.1",
     author="Guangyu He",
     author_email="me@heguangyu.net",
