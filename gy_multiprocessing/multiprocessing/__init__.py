@@ -1,7 +1,7 @@
 import time
 
-import multi_process
-import multi_process_withqueue
+from gy_multiprocessing.multiprocessing import multi_process
+from gy_multiprocessing.multiprocessing import multi_process_withqueue
 
 
 def init() -> dict:
