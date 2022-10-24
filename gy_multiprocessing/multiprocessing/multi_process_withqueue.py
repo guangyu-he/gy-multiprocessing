@@ -5,6 +5,17 @@ import time
 class MultiProcess:
     def __init__(self, init: dict, outer_loop_times: int, current_loop_index: int, process_name: str = "",
                  max_threads: int = multiprocessing.cpu_count(), timeout: int = 2 * 60, process_log: bool = False):
+        """
+        Args:
+            init (dict): the initialize dictionary including process pool list and start time, use gy_multiprocessing.multiprocessing.init() to generate
+            outer_loop_times (int): the number of loop times for the outer loop
+            current_loop_index (int): the current loop index
+            process_name (str, optional): the desired process name. Defaults to "", which will not display in the console
+            max_threads (int, optional): the maximum number of threads. Defaults to multiprocessing.cpu_count()
+            timeout (int, optional): the timeout for each process. Defaults to 120 seconds
+            process_log (bool, optional): whether to print the process log when process closing to the end. Defaults to False.
+        Generating an object for multiprocessing with a return from the function.
+        """
         # set max processing pool equals to the cpu core number
         self.max_threads = max_threads
         # every single process could only have 2 min runtime
@@ -25,11 +36,18 @@ class MultiProcess:
         self.process_log = process_log
 
         # a get context method for get return value
-        # NOTE! a q.put() method must include in the called func
+        # NOTE! a q.put() method must include in the called func and its args
         self.ctx = multiprocessing.get_context('spawn')
         self.q = self.ctx.Queue()
 
     def start_process(self, func, func_args: tuple) -> (list, list):
+        """
+        Args:
+            func (function): the function to be called for multiprocessing
+            func_args (tuple): the arguments of the function
+        Returns:
+            (list, list): the process pool list, and the process result list
+        """
 
         process_list = self.process_list
         process_result_list = self.process_result_list
@@ -56,6 +74,12 @@ class MultiProcess:
         return process_list, process_result_list
 
     def run(self, func, func_args: tuple):
+        """
+        Args:
+            func (function): the function to be called for multiprocessing
+            func_args (tuple): the arguments of the function:
+        Start the multiprocessing object
+        """
 
         process_list, process_result_list = self.start_process(func, func_args + (self.q,))
 

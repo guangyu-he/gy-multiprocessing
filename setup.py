@@ -5,11 +5,11 @@ with open('README.md') as fh:
 
 setup(
     name="gy_multiprocessing",
-    version="0.1.0",
+    version="0.1.1",
     author="Guangyu He",
     author_email="me@heguangyu.net",
     description="Run function in multiple processes",
-    long_description="A basic library that run functions in parallel multiple processes",
+    long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/guangyu-he/gy-multiprocessing",
     install_requires=[],
