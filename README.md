@@ -10,7 +10,9 @@ pip install git+https://github.com/guangyu-he/gy-multiprocessing
 
 ### via PyPI
 
-<code>pip install gy-multiprocessing</code>
+```
+pip install gy-multiprocessing
+```
 
 ## Usage
 
@@ -20,7 +22,9 @@ pip install git+https://github.com/guangyu-he/gy-multiprocessing
 
 ## Examples
 
-### no returned value from the function required
+### Multi Processing
+
+#### no returned value from the function required
 
 ```python
 import gy_multiprocessing.multiprocessing as gymp
@@ -48,7 +52,7 @@ if __name__ == '__main__':
         mp_pool = mp.run(your_func, args)
 ```
 
-### need to check the returned value from the function
+#### need to check the returned value from the function
 
 ```python
 import gy_multiprocessing.multiprocessing as gymp
@@ -76,6 +80,32 @@ if __name__ == '__main__':
 
         # run function using arguments and get callback mp_pool
         mp_pool = mp.run(your_func, args)
+```
+
+### Multi Threads
+
+<b>Note: you can not use multi "children" threads inside the multi threads method!</b> If you want to use such
+structure,
+please consider using Multi Threads inside the Multi Processing.
+
+```python
+import gy_multiprocessing as gymp
+
+
+def your_func(a_string):
+    print(a_string)
+
+
+if __name__ == '__main__':
+
+    mt = gymp.multithreading.multi_thread.MultiThread()
+    pool, pool_list = mt.init()
+    outer_loop_times = 10  # for example
+    for current_loop_index in range(outer_loop_times):
+        # your number of loop tasks that want to run using max cpu threads - 1
+        args = (str(outer_loop_times),)
+        pool_list = mt.add(pool, pool_list, your_func, args)
+    mt.run(pool, pool_list)
 ```
 
 2022&copy;Guangyu He, for further support please contact author. <br>
