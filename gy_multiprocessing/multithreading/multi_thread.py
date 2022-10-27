@@ -2,23 +2,23 @@ from multiprocessing import Pool, cpu_count
 import time
 
 
-class MultiPool:
+class MultiThread:
     def __init__(self):
         self.max_threads = cpu_count() - 1
 
     def init(self):
-        mp = Pool(processes=self.max_threads)
+        mt = Pool(processes=self.max_threads)
         pool_list: list = []
-        return mp, pool_list
+        return mt, pool_list
 
-    def add(self, mp, pool_list: list, func, args: tuple):
-        pool_list.append(mp.apply_async(func, args))
+    def add(self, mt, pool_list: list, func, args: tuple):
+        pool_list.append(mt.apply_async(func, args))
         return pool_list
 
-    def run(self, mp, pool_list: list):
+    def run(self, mt, pool_list: list):
         start = time.time()
-        mp.close()
-        mp.join()
+        mt.close()
+        mt.join()
         wait_pool_list = [res.get() for res in pool_list]
         end = time.time() - start
         print("done in {}s".format("%.2f" % end))
