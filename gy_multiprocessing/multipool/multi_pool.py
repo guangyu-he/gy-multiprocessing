@@ -20,11 +20,6 @@ class MultiPool:
         mp.close()
         mp.join()
         wait_pool_list = [res.get() for res in pool_list]
-        output = []
-        for each_list in wait_pool_list:
-            if each_list:
-                output += each_list
-
         end = time.time() - start
         print("done in {}s".format("%.2f" % end))
-        return output
+        return wait_pool_list
