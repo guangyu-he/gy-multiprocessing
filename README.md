@@ -5,7 +5,7 @@
 ### via Github
 
 ```bash
-pip install git+https://github.com/guangyu-he/py-multiprocessing@main
+pip install git+https://github.com/guangyu-he/gy-multiprocessing
 ```
 
 ### via PyPI
