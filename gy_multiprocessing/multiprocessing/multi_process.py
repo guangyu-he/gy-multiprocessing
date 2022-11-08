@@ -58,8 +58,8 @@ class MultiProcess:
         process.start()
 
         print(f"process: {str(process_list_dict['process'].name)} with {self.process_name} starts") \
-            if self.process_name is not "" else \
-            print(f"process: {str(process_list_dict['process'].name)} starts")
+            if self.process_name != "" \
+            else print(f"process: {str(process_list_dict['process'].name)} starts")
 
         return process_list
 
@@ -84,9 +84,9 @@ class MultiProcess:
                 for each_process in process_list:
                     print(
                         f"{each_process['process'].name}, runtime: {format(time.time() - each_process['start_time'], '.1f')}s, name: {self.process_name}") \
-                        if self.process_name is not "" else \
-                        print(
-                            f"{each_process['process'].name}, runtime: {format(time.time() - each_process['start_time'], '.1f')}s")
+                        if self.process_name != "" \
+                        else print(
+                        f"{each_process['process'].name}, runtime: {format(time.time() - each_process['start_time'], '.1f')}s")
                 print("-----")
 
             if process_list:
@@ -102,8 +102,9 @@ class MultiProcess:
                         time_cost = current_time - each_process['start_time']
                         print(
                             f"process: {str(each_process['process'].name)} done in: {format(time_cost, '.1f')}s with {self.process_name}") \
-                            if self.process_name is not "" else \
-                            print(f"process: {str(each_process['process'].name)} done in: {format(time_cost, '.1f')}s")
+                            if self.process_name != "" \
+                            else print(
+                            f"process: {str(each_process['process'].name)} done in: {format(time_cost, '.1f')}s")
                         try:
                             each_process['process'].terminate()
                             each_process['process'].close()
@@ -115,9 +116,9 @@ class MultiProcess:
                         # TODO! not working perfectly, one time out will cause all processes to terminate?
                         print(
                             f"process: {str(each_process['process'].name)} with {self.process_name} is terminated due to timeout") \
-                            if self.process_name is not "" else \
-                            print(
-                                f"process: {str(each_process['process'].name)} is terminated due to timeout")
+                            if self.process_name != "" \
+                            else print(
+                            f"process: {str(each_process['process'].name)} is terminated due to timeout")
                         try:
                             each_process['process'].terminate()
                             each_process['process'].close()
@@ -129,8 +130,8 @@ class MultiProcess:
                         # only 10s to timeout
                         print(
                             f"process: {str(each_process['process'].name)} closing to timeout with name: {self.process_name}") \
-                            if self.process_name is not "" else \
-                            print(f"process: {str(each_process['process'].name)} closing to timeout")
+                            if self.process_name != "" \
+                            else print(f"process: {str(each_process['process'].name)} closing to timeout")
 
                 if len(process_list) < self.max_threads and self.current_loop_index != self.outer_loop_times - 1:
                     # if all tasks are in the pool then wait until all tasks are finished
