@@ -42,8 +42,6 @@ class MultiProcess:
             list: the process pool list, and the process result list
         """
 
-        process_list = self.process_list
-
         # initialize multiprocessing for core loop function
         process = multiprocessing.Process(target=func, args=func_args)
 
@@ -52,7 +50,7 @@ class MultiProcess:
 
         # set dict inside the process list
         process_list_dict = {'process': process, 'start_time': process_start_time}
-        process_list.append(process_list_dict)
+        self.process_list.append(process_list_dict)
 
         # start the process
         process.start()
@@ -61,7 +59,7 @@ class MultiProcess:
             if self.process_name != "" \
             else print(f"process: {str(process_list_dict['process'].name)} starts")
 
-        return process_list
+        return self.process_list
 
     def run(self, func, func_args: tuple):
         """
