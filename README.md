@@ -58,8 +58,9 @@ if __name__ == '__main__':
 import gy_multiprocessing.multiprocessing as gymp
 
 
-def your_func(a_string: str):
-    print(a_string)
+def your_func(a_string: str, queue):
+    # NOTE! you must add a argument for queue and use put() method to fetch the returning value
+    queue.put(a_string)
 
 
 if __name__ == '__main__':
@@ -79,6 +80,7 @@ if __name__ == '__main__':
         args = (str(outer_loop_times),)
 
         # run function using arguments and get callback mp_pool
+        # returned value will be shown after each process is done
         mp_pool = mp.run(your_func, args)
 ```
 
