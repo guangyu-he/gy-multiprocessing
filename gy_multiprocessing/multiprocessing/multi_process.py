@@ -139,8 +139,8 @@ class MultiProcess:
                 # if all tasks in the pool are done
                 break
 
-            # check every 2 seconds
-            time.sleep(2)
+            # check every 0.5 seconds
+            time.sleep(0.5)
 
         return {
             'process_list': process_list,
