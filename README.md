@@ -10,15 +10,21 @@ pip install git+https://github.com/guangyu-he/gy-multiprocessing
 
 ### via PyPI
 
-```
+```bash
 pip install gy-multiprocessing
 ```
 
 ## Usage
 
-- initialize a mp pool with a dictionary of lists of processes (and their output) and their runtimes
-- generate a mp object inside the loop you want to run parallel
-- run the function with the given arguments and callback the mp pool
+- initializing multiprocessing/multithreading instance
+- adding your tasks into the pool, either using loop or sentences
+- running the instance
+
+## Note:
+
+- the multiprocessing must work in a function or entrance, do not use it barely in the script
+- make sure the code does require multiprocessing/multithreading, wrongly using the multiprocessing may even lose
+  performance
 
 ## Examples
 
@@ -45,13 +51,13 @@ if __name__ == '__main__':
     # do not use it barely
 
     """
-    # initializing the multi threading instance
+    # initializing the multiprocessing instance
     # the default max_process are your cpu max cores
     # max_process could be infinite, but performance will get suffered when the hardware is overloaded
     """
     mp = gymp.MultiProcess(max_process=8)
 
-    # example for multithreading in the loop
+    # example for multiprocessing in the loop
     outer_loop_times = 5
     for current_loop_index in range(outer_loop_times):
         # your running arguments, must be tuple
@@ -66,16 +72,13 @@ if __name__ == '__main__':
     mp.add(your_func, (10,))
 
     """
-    # running tasks in multi threading pool (returned values are optional)
+    # running tasks in multiprocessing pool (returned values are optional)
     """
     result = mp.run()
     print(result)
 ```
 
 ### Multi Threads
-
-<b>Note: you can not use multi "children" threads inside the multi threads' method!</b> If you want to use such
-structure,please consider using Multi Threads inside the Multi Processing.
 
 ```python
 import gy_multiprocessing.multithreading.multi_thread as gymt
@@ -97,7 +100,7 @@ if __name__ == '__main__':
     start = time.time()
 
     """
-    # initializing the multi threading instance
+    # initializing the multithreading instance
     # the default max_threads are your cpu max cores number - 1
     # max_threads can not larger than your cpu max core number
     """
@@ -120,7 +123,7 @@ if __name__ == '__main__':
     mt.add(your_func, args)
 
     """
-    # running tasks in multi threading pool (returned values are optional)
+    # running tasks in multithreading pool (returned values are optional)
     """
     results = mt.run()
     print(results)
@@ -129,6 +132,78 @@ if __name__ == '__main__':
     end = time.time() - start
     print("done in {}s".format("%.2f" % end))
 ```
+
+### Combined Structure
+
+<b>Note: you can not use multiprocessing or sub-multithreading in the multithreading method</b>
+
+If you want to use such structure, based on your needs, considering using sub-multiprocessing or multithreading in
+multiprocessing structure.
+
+```python
+import gy_multiprocessing.multiprocessing.multi_process as gymp
+import gy_multiprocessing.multithreading.multi_thread as gymt
+
+
+def your_sub_func(b_string: int, queue=None):
+    # your function that needs to multithreading/multiprocessing
+
+    b_string += 1
+    if queue is not None:
+        queue.put(b_string)
+    return b_string
+
+
+def your_mt_func(a_string: int, queue):
+    # multithreading in multiprocessing structure
+
+    mt = gymt.MultiThread()
+    for current_loop_index in range(a_string):
+        # your running arguments, must be tuple
+        args = (current_loop_index,)
+        mt.add(your_sub_func, args)
+    result = mt.run()
+
+    # Do not forget queue!
+    queue.put(result)
+
+
+def your_mp_func(a_string: int, queue):
+    # sub-multiprocessing in multiprocessing structure
+
+    smp = gymp.MultiProcess()
+    for current_loop_index in range(a_string):
+        # your running arguments, must be tuple
+        args = (current_loop_index,)
+        smp.add(your_sub_func, args)
+    result = smp.run()
+
+    # Do not forget queue!
+    queue.put(result)
+
+
+if __name__ == '__main__':
+
+    mp = gymp.MultiProcess()
+
+    outer_loop_times = 10
+    for current_loop_index in range(outer_loop_times):
+        args = (current_loop_index,)
+        mp.add(your_mt_func, args)
+    print(mp.run())
+
+    print("\n-----”\n")
+
+    mp = gymp.MultiProcess()
+
+    for current_loop_index in range(outer_loop_times):
+        args = (current_loop_index,)
+        mp.add(your_mp_func, args)
+    print(mp.run())
+```
+
+feel free to check source code in <a href="https://github.com/guangyu-he/gy-multiprocessing">GitHub</a>, you are welcome
+to leave any comments.
 
 2022&copy;Guangyu He, for further support please contact author. <br>
 Email: <a href="mailto:me@heguangyu.net">me@heguangyu.net</a>
