@@ -7,9 +7,10 @@ import warnings
 class MultiThread:
     def __init__(self, max_threads: int = cpu_count() - 1):
         """
-        Using Pool method from multiprocessing to process the loop using multiple threads
+        Args:
+            max_threads (int, optional): the maximum number of threads, default is max CPU core - 1
 
-        :param max_threads: the maximum number of threads, default is max CPU core - 1
+        Using Pool method from multiprocessing to process the multithreading tasks
         """
 
         # error handling
@@ -29,10 +30,11 @@ class MultiThread:
 
     def add(self, func, args: tuple):
         """
-        Adding a task into the multi threading pool
+        Args:
+            func (FunctionType): the function to be called for multi threading
+            args (tuple): the arguments of the function
 
-        :param func: the function to be called for multi threading
-        :param args: the arguments of the function
+        Adding a task into the multi threading pool
         """
 
         # TODO! func: FunctionType in PyCharm will warns:
@@ -48,9 +50,10 @@ class MultiThread:
 
     def run(self) -> list:
         """
-        Running tasks in the pool list
+        Returns:
+            the result list of returned value from each tasks
 
-        :return: the result list of returned value from each tasks
+        Running tasks in the pool list
         """
 
         self.mt_pool.close()
