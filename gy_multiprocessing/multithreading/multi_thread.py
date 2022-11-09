@@ -31,7 +31,7 @@ class MultiThread:
     def add(self, func, args: tuple):
         """
         Args:
-            func (FunctionType): the function to be called for multi threading
+            func: the function to be called for multi threading
             args (tuple): the arguments of the function
 
         Adding a task into the multi threading pool

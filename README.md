@@ -30,38 +30,55 @@ import time
 
 
 def your_func(a_string: int, queue):
+    # NOTE! you MUST add a argument for queue and use put() method to fetch the returning value
+
     print(a_string)
     if a_string % 5 == 0:
         time.sleep(2)
 
-    # NOTE! you must add a argument for queue and use put() method to fetch the returning value
+    # NOTE! This is a MUST-have line, or the multi_processing will not end!!!
     queue.put(a_string)
 
 
 if __name__ == '__main__':
-    mp = gymp.MultiProcess()
-    outer_loop_times = 5  # for example
+    # the multiprocessing must work in a function or entrance
+    # do not use it barely
+
+    """
+    # initializing the multi threading instance
+    # the default max_process are your cpu max cores
+    # max_process could be infinite, but performance will get suffered when the hardware is overloaded
+    """
+    mp = gymp.MultiProcess(max_process=8)
+
+    # example for multithreading in the loop
+    outer_loop_times = 5
     for current_loop_index in range(outer_loop_times):
         # your running arguments, must be tuple
         args = (current_loop_index,)
 
-        # run function using arguments and get callback mp_pool
+        """
+        # adding tasks in multiprocessing pool
+        """
         mp.add(your_func, args)
 
     # it is also possible to add task outside the loop
     mp.add(your_func, (10,))
 
-    print(mp.run())
+    """
+    # running tasks in multi threading pool (returned values are optional)
+    """
+    result = mp.run()
+    print(result)
 ```
 
 ### Multi Threads
 
-<b>Note: you can not use multi "children" threads inside the multi threads method!</b> If you want to use such
-structure,
-please consider using Multi Threads inside the Multi Processing.
+<b>Note: you can not use multi "children" threads inside the multi threads' method!</b> If you want to use such
+structure,please consider using Multi Threads inside the Multi Processing.
 
 ```python
-import gy_multiprocessing as gymp
+import gy_multiprocessing.multithreading.multi_thread as gymt
 import time
 
 
@@ -73,7 +90,7 @@ def your_func(a_string):
 
 
 if __name__ == '__main__':
-    # the multi threading must work in a function or entrance
+    # the multithreading must work in a function or entrance
     # do not use it barely
 
     # timing (optional)
@@ -82,8 +99,9 @@ if __name__ == '__main__':
     """
     # initializing the multi threading instance
     # the default max_threads are your cpu max cores number - 1
+    # max_threads can not larger than your cpu max core number
     """
-    mt = gymp.multithreading.multi_thread.MultiThread(max_threads=4)
+    mt = gymt.MultiThread(max_threads=4)
 
     # example for multithreading in the loop
     outer_loop_times = 5
