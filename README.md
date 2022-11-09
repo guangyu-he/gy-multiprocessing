@@ -92,22 +92,54 @@ please consider using Multi Threads inside the Multi Processing.
 
 ```python
 import gy_multiprocessing as gymp
+import time
 
 
 def your_func(a_string):
+    # your single task function
+    
     print(a_string)
+    return a_string + "!"
 
 
 if __name__ == '__main__':
+    # the multi threading must work in a function or entrance
+    # do not use it barely
 
-    mt = gymp.multithreading.multi_thread.MultiThread()
-    pool, pool_list = mt.init()
-    outer_loop_times = 10  # for example
+    # timing (optional)
+    start = time.time()
+
+    """
+    # initializing the multi threading instance
+    # the default max_threads are your cpu max cores number - 1
+    """
+    mt = gymp.multithreading.multi_thread.MultiThread(max_threads=4)
+
+    # example for multithreading in the loop
+    outer_loop_times = 5
     for current_loop_index in range(outer_loop_times):
-        # your number of loop tasks that want to run using max cpu threads - 1
-        args = (str(outer_loop_times),)
-        pool_list = mt.add(pool, pool_list, your_func, args)
-    mt.run(pool, pool_list)
+        args = (str(current_loop_index),)
+
+        """
+        # adding tasks in multi threading pool
+        """
+        mt.add(your_func, args)
+
+    # it is also possible to work without loop
+    args = (str(1),)
+    mt.add(your_func, args)
+    args = (str(2),)
+    mt.add(your_func, args)
+
+    """
+    # running tasks in multi threading pool (returned values are optional)
+    """
+    results = mt.run()
+    print(results)
+
+    # timing (optional)
+    end = time.time() - start
+    print("done in {}s".format("%.2f" % end))
 ```
 
 2022&copy;Guangyu He, for further support please contact author. <br>

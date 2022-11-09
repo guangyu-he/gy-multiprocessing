@@ -1,40 +1,60 @@
 from multiprocessing import Pool, cpu_count
-import time
+from multiprocessing.pool import Pool as PoolType
+from types import FunctionType
+import warnings
 
 
 class MultiThread:
-    def __init__(self):
-        self.max_threads = cpu_count() - 1
+    def __init__(self, max_threads: int = cpu_count() - 1):
+        """
+        Using Pool method from multiprocessing to process the loop using multiple threads
 
-    def init(self):
+        :param max_threads: the maximum number of threads, default is max CPU core - 1
         """
-        :return: multi threads object and a threads list
-        """
-        mt = Pool(processes=self.max_threads)
-        pool_list: list = []
-        return mt, pool_list
 
-    def add(self, mt, pool_list: list, func, args: tuple):
+        # error handling
+        if type(max_threads) is not int:
+            raise TypeError("Wrong type of max_threads, must be an integer!")
+        if max_threads == 0:
+            raise IndexError("max_threads are set to be 0!")
+        if max_threads > cpu_count():
+            raise IndexError("max_threads are set to be larger than your cpu cores number!")
+        if max_threads == cpu_count():
+            warnings.warn("max_threads are set to your cpu cores number! It is not recommended to do that!")
+
+        self.max_threads = max_threads
+
+        self.mt_pool: PoolType = Pool(processes=self.max_threads)
+        self.mt_pool_list: list = []
+
+    def add(self, func, args: tuple):
         """
-        :param mt:  multi threads object
-        :param pool_list: threads list
-        :param func: the function to be called for multiprocessing
+        Adding a task into the multi threading pool
+
+        :param func: the function to be called for multi threading
         :param args: the arguments of the function
-        :return: a list with added tasks
         """
-        pool_list.append(mt.apply_async(func, args))
-        return pool_list
 
-    def run(self, mt, pool_list: list):
+        # TODO! func: FunctionType in PyCharm will warns:
+        # TODO! Expected type 'FunctionType', got '(a_string: Any) -> None' instead
+
+        # error handling
+        if not isinstance(func, FunctionType):
+            raise TypeError("Wrong type of func, must be a FunctionType!")
+        if not isinstance(args, tuple):
+            raise TypeError("Wrong type of args, must be a tuple!")
+
+        self.mt_pool_list.append(self.mt_pool.apply_async(func, args))
+
+    def run(self) -> list:
         """
-        :param mt:  multi threads object
-        :param pool_list: threads list
-        :return: the result list from each tasks
+        Running tasks in the pool list
+
+        :return: the result list of returned value from each tasks
         """
-        start = time.time()
-        mt.close()
-        mt.join()
-        wait_pool_list = [res.get() for res in pool_list]
-        end = time.time() - start
-        print("done in {}s".format("%.2f" % end))
-        return wait_pool_list
+
+        self.mt_pool.close()
+        self.mt_pool.join()
+
+        return_from_pool_list: list = [res.get() for res in self.mt_pool_list]
+        return return_from_pool_list
