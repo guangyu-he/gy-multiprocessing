@@ -24,64 +24,34 @@ pip install gy-multiprocessing
 
 ### Multi Processing
 
-#### no returned value from the function required
-
 ```python
-import gy_multiprocessing.multiprocessing as gymp
+import gy_multiprocessing.multiprocessing.multi_process as gymp
+import time
 
 
-def your_func(a_string: str):
+def your_func(a_string: int, queue):
     print(a_string)
+    if a_string % 5 == 0:
+        time.sleep(2)
 
-
-if __name__ == '__main__':
-    mp_pool = gymp.init()
-    outer_loop_times = 10  # for example
-    for current_loop_index in range(outer_loop_times):
-        # your number of loop tasks that want to run parallel
-        # optional arguments:
-        # process_name: the name of the process
-        # max_threads: the number of max parallel processes
-        # process_log: whether to show the process pool log when process is running to the end
-        mp = gymp.multi_process.MultiProcess(mp_pool, outer_loop_times, current_loop_index)
-
-        # your running arguments, must be tuple
-        args = (str(outer_loop_times),)
-
-        # run function using arguments and get callback mp_pool
-        mp_pool = mp.run(your_func, args)
-```
-
-#### need to check the returned value from the function
-
-```python
-import gy_multiprocessing.multiprocessing as gymp
-
-
-def your_func(a_string: str, queue):
     # NOTE! you must add a argument for queue and use put() method to fetch the returning value
     queue.put(a_string)
 
 
 if __name__ == '__main__':
-    mp_pool = gymp.init()
-    outer_loop_times = 10  # for example
+    mp = gymp.MultiProcess()
+    outer_loop_times = 5  # for example
     for current_loop_index in range(outer_loop_times):
-        # your number of loop tasks that want to run parallel
-        # using withqueue method to show returned value in the console
-
-        # optional arguments:
-        # process_name: the name of the process
-        # max_threads: the number of max parallel processes
-        # process_log: whether to show the process pool log when process is running to the end
-        mp = gymp.multi_process_withqueue.MultiProcess(mp_pool, outer_loop_times, current_loop_index)
-
         # your running arguments, must be tuple
-        args = (str(outer_loop_times),)
+        args = (current_loop_index,)
 
         # run function using arguments and get callback mp_pool
-        # returned value will be shown after each process is done
-        mp_pool = mp.run(your_func, args)
+        mp.add(your_func, args)
+
+    # it is also possible to add task outside the loop
+    mp.add(your_func, (10,))
+
+    print(mp.run())
 ```
 
 ### Multi Threads
@@ -97,7 +67,7 @@ import time
 
 def your_func(a_string):
     # your single task function
-    
+
     print(a_string)
     return a_string + "!"
 
