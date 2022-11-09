@@ -1,149 +1,135 @@
-import multiprocessing
+from multiprocessing import Process, cpu_count, get_context
+from multiprocessing.context import Process as ProcessType
 import time
+from types import FunctionType
+import warnings
 
 
 class MultiProcess:
-    def __init__(self, init: dict, outer_loop_times: int, current_loop_index: int, process_name: str = "",
-                 max_threads: int = multiprocessing.cpu_count(), timeout: int = 2 * 60, process_log: bool = False):
-        """
-        Args:
-            init (dict): the initialize dictionary including process pool list and start time, use gy_multiprocessing.multiprocessing.init() to generate
-            outer_loop_times (int): the number of loop times for the outer loop
-            current_loop_index (int): the current loop index
-            process_name (str, optional): the desired process name. Defaults to "", which will not display in the console
-            max_threads (int, optional): the maximum number of threads. Defaults to multiprocessing.cpu_count()
-            timeout (int, optional): the timeout for each process. Defaults to 120 seconds
-            process_log (bool, optional): whether to print the process log when process closing to the end. Defaults to False.
-        Generating an object for multiprocessing.
-        """
-        # set max processing pool equals to the cpu core number
-        self.max_threads = max_threads
-        # every single process could only have 2 min runtime
-        self.timeout = timeout
-        # a processing list
-        self.process_list = init['process_list']
-        # start timing for main loop
-        self.start_time = init['start_time']
-        # outer loop times
-        self.outer_loop_times = outer_loop_times
-        # current loop index
-        self.current_loop_index = current_loop_index
-        # process name
-        self.process_name = process_name
-        # showing process log when closing to end
-        self.process_log = process_log
 
-    def start_process(self, func, func_args: tuple) -> list:
+    def __init__(self, max_process: int = cpu_count()):
         """
         Args:
-            func (function): the function to be called for multiprocessing
-            func_args (tuple): the arguments of the function
-        Returns:
-            list: the process pool list, and the process result list
+            max_process (int, optional): the maximum number of parallel running processes. Defaults to max CPU core
+
+        Using Process method from multiprocessing to process the multiprocessing tasks
         """
+
+        # error handling
+        if type(max_process) is not int:
+            raise TypeError("Wrong type of max_threads, must be an integer!")
+        if max_process == 0:
+            raise IndexError("max_threads are set to be 0!")
+        if max_process > cpu_count():
+            warnings.warn("too much sub processes, performance may get influenced!")
+
+        # set max processing pool equals to the cpu core number
+        self.max_process = max_process
+
+        self.mp_pool_list: list[dict] = []
+
+    def add(self, func, args: tuple, process_name: str = ""):
+        """
+        Args:
+            func (function): the function to be called
+            args (tuple): the arguments to be passed to the function
+            process_name (str, optional): the name of the process. Defaults to "".
+
+        Adding a task into the multi threading pool
+        """
+
+        # TODO! func: FunctionType in PyCharm will warns:
+        # TODO! Expected type 'FunctionType', got '(a_string: Any) -> None' instead
+
+        # error handling
+        if not isinstance(func, FunctionType):
+            raise TypeError("Wrong type of func, must be a FunctionType!")
+        if not isinstance(args, tuple):
+            raise TypeError("Wrong type of args, must be a tuple!")
+        if not isinstance(process_name, str):
+            raise TypeError("Wrong type of process_name, must be a str!")
+
+        # a get context method for get return value
+        # NOTE! a q.put() method must include in the called func and its args
+        queue_instance = get_context('spawn').Queue()
 
         # initialize multiprocessing for core loop function
-        process = multiprocessing.Process(target=func, args=func_args)
-
-        # start timing for each process
-        process_start_time = time.time()
-
+        process: ProcessType = Process(target=func, args=args + (queue_instance,))
         # set dict inside the process list
-        process_list_dict = {'process': process, 'start_time': process_start_time}
-        self.process_list.append(process_list_dict)
+        process_list_dict = {'process': process, 'start_time': int, 'process_result': queue_instance,
+                             'process_name': process_name}
+        self.mp_pool_list.append(process_list_dict)
 
-        # start the process
-        process.start()
-
-        print(f"process: {str(process_list_dict['process'].name)} with {self.process_name} starts") \
-            if self.process_name != "" \
-            else print(f"process: {str(process_list_dict['process'].name)} starts")
-
-        return self.process_list
-
-    def run(self, func, func_args: tuple):
+    def run(self) -> list:
         """
-        Args:
-            func (function): the function to be called for multiprocessing
-            func_args (tuple): the arguments of the function:
-        Start the multiprocessing object
+        Returns:
+            the result list of returned value from each tasks
+
+        Run all the processes
         """
 
-        process_list = self.start_process(func, func_args)
+        # initializing a processing list with max length of max_process
+        processing_list: list = []
 
-        while True:
-            # while loop for setting max process to max_threads
+        if len(self.mp_pool_list) <= self.max_process:
+            # if the number of tasks is less than max_process number
+            for process_index, each_process in enumerate(self.mp_pool_list):
+                # put all tasks in the pool
+                processing_list.append(each_process)
+                each_process['start_time'] = time.time()
+                each_process['process'].start()
 
-            if len(self.process_list) < self.max_threads \
-                    and self.current_loop_index > self.outer_loop_times - self.max_threads \
-                    and self.process_log:
-                # if the process is ending with less than max_threads undergoing processes
-                # print current processes
-                for each_process in process_list:
-                    print(
-                        f"{each_process['process'].name}, runtime: {format(time.time() - each_process['start_time'], '.1f')}s, name: {self.process_name}") \
-                        if self.process_name != "" \
-                        else print(
-                        f"{each_process['process'].name}, runtime: {format(time.time() - each_process['start_time'], '.1f')}s")
-                print("-----")
-
-            if process_list:
-                # if there is any process in the list
-
-                for index, each_process in enumerate(process_list):
-                    # check each process
-                    current_time = time.time()
-                    time_cost = current_time - each_process['start_time']
-
-                    if not each_process['process'].is_alive():
-                        # if any process is dead
-                        time_cost = current_time - each_process['start_time']
+            while processing_list:
+                time.sleep(0.05)
+                for processing_index, each_processing_process in enumerate(processing_list):
+                    if not each_processing_process['process'].is_alive():
+                        # check each process
+                        current_time = time.time()
+                        time_cost = current_time - each_processing_process['start_time']
+                        get_result = each_processing_process['process_result'].get()
                         print(
-                            f"process: {str(each_process['process'].name)} done in: {format(time_cost, '.1f')}s with {self.process_name}") \
-                            if self.process_name != "" \
+                            f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
+                            if each_processing_process['process_name'] != "" \
                             else print(
-                            f"process: {str(each_process['process'].name)} done in: {format(time_cost, '.1f')}s")
-                        try:
-                            each_process['process'].terminate()
-                            each_process['process'].close()
-                        except ValueError:
-                            pass
-                        process_list.pop(index)
-                    elif time_cost >= self.timeout:
-                        # or any process takes too long to finish (longer than the timeout)
-                        # TODO! not working perfectly, one time out will cause all processes to terminate?
-                        print(
-                            f"process: {str(each_process['process'].name)} with {self.process_name} is terminated due to timeout") \
-                            if self.process_name != "" \
-                            else print(
-                            f"process: {str(each_process['process'].name)} is terminated due to timeout")
-                        try:
-                            each_process['process'].terminate()
-                            each_process['process'].close()
-                        except ValueError:
+                            f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
+                        # remove the stopped task from processing list
+                        processing_list.pop(processing_index)
+                        for process_index, each_process in enumerate(self.mp_pool_list):
+                            if each_processing_process['process'].name == each_process['process'].name:
+                                self.mp_pool_list[process_index]['process_result'] = get_result
+        else:
+            # if the number of tasks is more than max_process number
+            for process_index, each_process in enumerate(self.mp_pool_list):
+                if len(processing_list) < self.max_process:
+                    # if there is less than max_process number of tasks in the pool
+                    # add a new task in it
+                    processing_list.append(each_process)
+                    each_process['start_time'] = time.time()
+                    each_process['process'].start()
+                while processing_list:
 
-                            pass
-                        process_list.pop(index)
-                    elif time_cost >= self.timeout - 10:
-                        # only 10s to timeout
-                        print(
-                            f"process: {str(each_process['process'].name)} closing to timeout with name: {self.process_name}") \
-                            if self.process_name != "" \
-                            else print(f"process: {str(each_process['process'].name)} closing to timeout")
+                    if len(processing_list) < self.max_process and process_index != len(self.mp_pool_list) - 1:
+                        # if all tasks are in the pool then wait until all tasks are finished
+                        # or break the loop to add a new task in the pool
+                        break
+                    else:
+                        time.sleep(0.05)
 
-                if len(process_list) < self.max_threads and self.current_loop_index != self.outer_loop_times - 1:
-                    # if all tasks are in the pool then wait until all tasks are finished
-                    # or break the loop to add a new task in the pool
-                    break
-            else:
-                # if all tasks in the pool are done
-                break
+                    for processing_index, each_processing_process in enumerate(processing_list):
+                        if not each_processing_process['process'].is_alive():
+                            # check each process
+                            current_time = time.time()
+                            time_cost = current_time - each_processing_process['start_time']
+                            get_result = each_processing_process['process_result'].get()
+                            print(
+                                f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
+                                if each_processing_process['process_name'] != "" \
+                                else print(
+                                f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
+                            # remove the stopped task from processing list
+                            processing_list.pop(processing_index)
+                            for process_index, each_process in enumerate(self.mp_pool_list):
+                                if each_processing_process['process'].name == each_process['process'].name:
+                                    self.mp_pool_list[process_index]['process_result'] = get_result
 
-            # check every 0.5 seconds
-            time.sleep(0.5)
-
-        return {
-            'process_list': process_list,
-            'start_time': self.start_time,
-            'process_result_list': []
-        }
+        return [res['process_result'] for res in self.mp_pool_list]
