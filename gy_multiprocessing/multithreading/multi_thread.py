@@ -1,6 +1,6 @@
 from multiprocessing import Pool, cpu_count
 from multiprocessing.pool import Pool as PoolType
-from types import FunctionType
+from types import FunctionType, MethodType
 import warnings
 
 
@@ -41,7 +41,7 @@ class MultiThread:
         # TODO! Expected type 'FunctionType', got '(a_string: Any) -> None' instead
 
         # error handling
-        if not isinstance(func, FunctionType):
+        if not isinstance(func, FunctionType) and not isinstance(func, MethodType):
             raise TypeError("Wrong type of func, must be a FunctionType!")
         if not isinstance(args, tuple):
             raise TypeError("Wrong type of args, must be a tuple!")
