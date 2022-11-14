@@ -99,7 +99,7 @@ class MultiProcess:
                                 self.mp_pool_list[process_index]['process_result'] = get_result
         else:
             # if the number of tasks is more than max_process number
-            for process_index, each_process in enumerate(self.mp_pool_list):
+            for pool_index, each_process in enumerate(self.mp_pool_list):
                 if len(processing_list) < self.max_process:
                     # if there is less than max_process number of tasks in the pool
                     # add a new task in it
@@ -108,7 +108,7 @@ class MultiProcess:
                     each_process['process'].start()
                 while processing_list:
 
-                    if len(processing_list) < self.max_process and process_index != len(self.mp_pool_list) - 1:
+                    if len(processing_list) < self.max_process and pool_index != len(self.mp_pool_list) - 1:
                         # if all tasks are in the pool then wait until all tasks are finished
                         # or break the loop to add a new task in the pool
                         break

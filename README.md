@@ -202,6 +202,14 @@ if __name__ == '__main__':
     print(mp.run())
 ```
 
+## Updates Log
+
+### v0.2.3
+
+#### bug fix
+
+- fix an issue casing not adding new process to pool until all processed are done in current pool
+
 feel free to check source code in <a href="https://github.com/guangyu-he/gy-multiprocessing">GitHub</a>, you are welcome
 to leave any comments.
 
