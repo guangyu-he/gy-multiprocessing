@@ -211,9 +211,6 @@ if __name__ == '__main__':
 
 - fixed an issue casing not adding new process to pool until all processed are done in current pool
 
-feel free to check source code in <a href="https://github.com/guangyu-he/gy-multiprocessing">GitHub</a>, you are welcome
-to leave any comments.
-
 ### v0.2.4
 
 #### feature
@@ -225,6 +222,9 @@ to leave any comments.
 #### improvement
 
 - simplified duplicated codes
+
+feel free to check source code in <a href="https://github.com/guangyu-he/gy-multiprocessing">GitHub</a>, you are welcome
+to leave any comments.
 
 2022&copy;Guangyu He, for further support please contact author. <br>
 Email: <a href="mailto:me@heguangyu.net">me@heguangyu.net</a>
