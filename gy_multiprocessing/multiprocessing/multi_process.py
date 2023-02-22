@@ -11,16 +11,16 @@ class MultiProcess:
         """
         Args:
             max_process (int, optional): the maximum number of parallel running processes. Defaults to max CPU core
-            silent (bool, optional): whether to suppress logs. Defaults to False.
+            silent (bool, optional): whether to silence logs. Defaults to False.
 
         Using Process method from multiprocessing to process the multiprocessing tasks
         """
 
         # error handling
         if type(max_process) is not int:
-            raise TypeError(f"Wrong type of max_threads '{max_process}', must be an integer!")
+            raise TypeError(f"Wrong type of max process '{max_process}', must be an integer!")
         if max_process == 0:
-            raise IndexError("max_threads are set to be 0!")
+            raise IndexError("max process are set to be 0!")
         if max_process > cpu_count():
             warnings.warn("too much sub processes, performance may get influenced!")
 
