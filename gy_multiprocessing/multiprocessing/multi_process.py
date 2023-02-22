@@ -7,10 +7,11 @@ import warnings
 
 class MultiProcess:
 
-    def __init__(self, max_process: int = cpu_count()):
+    def __init__(self, max_process: int = cpu_count(), silent: bool = False):
         """
         Args:
             max_process (int, optional): the maximum number of parallel running processes. Defaults to max CPU core
+            silent (bool, optional): whether to suppress logs. Defaults to False.
 
         Using Process method from multiprocessing to process the multiprocessing tasks
         """
@@ -24,7 +25,10 @@ class MultiProcess:
             warnings.warn("too much sub processes, performance may get influenced!")
 
         # set max processing pool equals to the cpu core number
-        self.max_process = max_process
+        self.max_process: int = max_process
+
+        # show log in console
+        self.silent: bool = silent
 
         self.mp_pool_list: list[dict] = []
 
@@ -67,11 +71,12 @@ class MultiProcess:
                 current_time = time.time()
                 time_cost = current_time - each_processing_process['start_time']
                 get_result = each_processing_process['process_result'].get()
-                print(
-                    f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
-                    if each_processing_process['process_name'] != "" \
-                    else print(
-                    f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
+                if not self.silent:
+                    print(
+                        f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
+                        if each_processing_process['process_name'] != "" \
+                        else print(
+                        f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
                 # remove the stopped task from processing list
                 list_of_processes.pop(processing_index)
                 for process_index, each_process in enumerate(self.mp_pool_list):
