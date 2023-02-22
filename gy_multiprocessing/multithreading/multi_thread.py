@@ -15,15 +15,16 @@ class MultiThread:
 
         # error handling
         if type(max_threads) is not int:
-            raise TypeError("Wrong type of max_threads, must be an integer!")
+            raise TypeError(f"Wrong type of max_threads '{max_threads}', must be an integer!")
         if max_threads == 0:
-            raise IndexError("max_threads are set to be 0!")
+            raise IndexError("max threads are set to be 0!")
         if max_threads > cpu_count():
-            raise IndexError("max_threads are set to be larger than your cpu cores number!")
+            raise IndexError(
+                f"max threads are set to be larger than your cpu cores number! Available cores: {cpu_count()}")
         if max_threads == cpu_count():
-            warnings.warn("max_threads are set to your cpu cores number! It is not recommended to do that!")
+            warnings.warn("max threads are set to your cpu cores number! It is not recommended to do that!")
 
-        self.max_threads = max_threads
+        self.max_threads: int = max_threads
 
         self.mt_pool: PoolType = Pool(processes=self.max_threads)
         self.mt_pool_list: list = []
