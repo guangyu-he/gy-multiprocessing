@@ -60,6 +60,26 @@ class MultiProcess:
                              'process_name': process_name}
         self.mp_pool_list.append(process_list_dict)
 
+    def each_process_func(self, list_of_processes: list) -> list:
+        for processing_index, each_processing_process in enumerate(list_of_processes):
+            if not each_processing_process['process'].is_alive():
+                # check each process
+                current_time = time.time()
+                time_cost = current_time - each_processing_process['start_time']
+                get_result = each_processing_process['process_result'].get()
+                print(
+                    f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
+                    if each_processing_process['process_name'] != "" \
+                    else print(
+                    f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
+                # remove the stopped task from processing list
+                list_of_processes.pop(processing_index)
+                for process_index, each_process in enumerate(self.mp_pool_list):
+                    if each_processing_process['process'].name == each_process['process'].name:
+                        self.mp_pool_list[process_index]['process_result'] = get_result
+
+        return list_of_processes
+
     def run(self) -> list:
         """
         Returns:
@@ -81,22 +101,8 @@ class MultiProcess:
 
             while processing_list:
                 time.sleep(0.05)
-                for processing_index, each_processing_process in enumerate(processing_list):
-                    if not each_processing_process['process'].is_alive():
-                        # check each process
-                        current_time = time.time()
-                        time_cost = current_time - each_processing_process['start_time']
-                        get_result = each_processing_process['process_result'].get()
-                        print(
-                            f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
-                            if each_processing_process['process_name'] != "" \
-                            else print(
-                            f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
-                        # remove the stopped task from processing list
-                        processing_list.pop(processing_index)
-                        for process_index, each_process in enumerate(self.mp_pool_list):
-                            if each_processing_process['process'].name == each_process['process'].name:
-                                self.mp_pool_list[process_index]['process_result'] = get_result
+                processing_list = self.each_process_func(processing_list)
+
         else:
             # if the number of tasks is more than max_process number
             for pool_index, each_process in enumerate(self.mp_pool_list):
@@ -115,21 +121,6 @@ class MultiProcess:
                     else:
                         time.sleep(0.05)
 
-                    for processing_index, each_processing_process in enumerate(processing_list):
-                        if not each_processing_process['process'].is_alive():
-                            # check each process
-                            current_time = time.time()
-                            time_cost = current_time - each_processing_process['start_time']
-                            get_result = each_processing_process['process_result'].get()
-                            print(
-                                f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
-                                if each_processing_process['process_name'] != "" \
-                                else print(
-                                f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
-                            # remove the stopped task from processing list
-                            processing_list.pop(processing_index)
-                            for process_index, each_process in enumerate(self.mp_pool_list):
-                                if each_processing_process['process'].name == each_process['process'].name:
-                                    self.mp_pool_list[process_index]['process_result'] = get_result
+                    processing_list = self.each_process_func(processing_list)
 
         return [res['process_result'] for res in self.mp_pool_list]
