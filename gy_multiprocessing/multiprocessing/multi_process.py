@@ -17,7 +17,7 @@ class MultiProcess:
 
         # error handling
         if type(max_process) is not int:
-            raise TypeError("Wrong type of max_threads, must be an integer!")
+            raise TypeError(f"Wrong type of max_threads '{max_process}', must be an integer!")
         if max_process == 0:
             raise IndexError("max_threads are set to be 0!")
         if max_process > cpu_count():
@@ -47,7 +47,7 @@ class MultiProcess:
         if not isinstance(args, tuple):
             raise TypeError("Wrong type of args, must be a tuple!")
         if not isinstance(process_name, str):
-            raise TypeError("Wrong type of process_name, must be a str!")
+            raise TypeError("Wrong type of process name, must be a str!")
 
         # a get context method for get return value
         # NOTE! a q.put() method must include in the called func and its args
@@ -56,8 +56,8 @@ class MultiProcess:
         # initialize multiprocessing for core loop function
         process: ProcessType = Process(target=func, args=args + (queue_instance,))
         # set dict inside the process list
-        process_list_dict = {'process': process, 'start_time': int, 'process_result': queue_instance,
-                             'process_name': process_name}
+        process_list_dict: dict = {'process': process, 'start_time': int, 'process_result': queue_instance,
+                                   'process_name': process_name}
         self.mp_pool_list.append(process_list_dict)
 
     def each_process_func(self, list_of_processes: list) -> list:
