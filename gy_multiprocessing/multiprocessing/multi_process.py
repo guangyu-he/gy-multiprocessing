@@ -30,6 +30,9 @@ class MultiProcess:
         # show log in console
         self.silent: bool = silent
 
+        # see if there is a valid queue.put() method
+        self.has_queue_put: bool = True
+
         self.mp_pool_list: list[dict] = []
 
     def add(self, func, args: tuple, process_name: str = ""):
@@ -72,12 +75,21 @@ class MultiProcess:
                 current_time = time.time()
                 time_cost = current_time - each_processing_process['start_time']
 
+                # initialize the result
+                get_result = None
+
                 if each_processing_process['process'].exitcode == 1:
                     # means there is an error occurred in this process
                     get_result = f"{each_processing_process['process_name'] + ' '}FAILED"
                     each_processing_process['process'].kill()
                 else:
-                    get_result = each_processing_process['process_result'].get()
+                    try:
+                        # if the process is not alive, use a small timeout to see if there is a valid non-empty queue
+                        get_result = each_processing_process['process_result'].get(timeout=0.05)
+                    except Exception as e:
+                        if repr(e) == "Empty()":
+                            self.has_queue_put = False
+                            get_result = None
 
                 if not self.silent:
                     print(
@@ -85,6 +97,7 @@ class MultiProcess:
                         if each_processing_process['process_name'] != "" \
                         else print(
                         f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
+
                 # remove the stopped task from processing list
                 list_of_processes.pop(processing_index)
                 for process_index, each_process in enumerate(self.mp_pool_list):
@@ -135,5 +148,8 @@ class MultiProcess:
                         time.sleep(0.05)
 
                     processing_list = self.each_process_func(processing_list)
+
+        if not self.has_queue_put:
+            warnings.warn("You may miss the queue.put() method in your function. The results may not correct!")
 
         return [res['process_result'] for res in self.mp_pool_list]
