@@ -67,10 +67,18 @@ class MultiProcess:
     def each_process_func(self, list_of_processes: list) -> list:
         for processing_index, each_processing_process in enumerate(list_of_processes):
             if not each_processing_process['process'].is_alive():
+
                 # check each process
                 current_time = time.time()
                 time_cost = current_time - each_processing_process['start_time']
-                get_result = each_processing_process['process_result'].get()
+
+                if each_processing_process['process'].exitcode == 1:
+                    # means there is an error occurred in this process
+                    get_result = f"{each_processing_process['process_name'] + ' '}FAILED"
+                    each_processing_process['process'].kill()
+                else:
+                    get_result = each_processing_process['process_result'].get()
+
                 if not self.silent:
                     print(
                         f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
