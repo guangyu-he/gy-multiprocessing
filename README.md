@@ -25,6 +25,7 @@ pip install gy-multiprocessing
 - the multiprocessing must work in a function or entrance, do not use it barely in the script
 - make sure the code does require multiprocessing/multithreading, wrongly using the multiprocessing may even lose
   performance
+- please attention to the queue implementation when using multiprocessing, details check the example below
 
 ## Examples
 
@@ -36,13 +37,13 @@ import time
 
 
 def your_func(a_string: int, queue):
-    # NOTE! you MUST add a argument for queue and use put() method to fetch the returning value
+    # NOTE! you MUST add an argument for queue and use put() method to fetch the returning value
 
     print(a_string)
     if a_string % 5 == 0:
         time.sleep(2)
 
-    # NOTE! This is a MUST-have line, or the multi_processing will not end!!!
+    # NOTE! if you are missing this method, there will be None result returned for current process
     queue.put(a_string)
 
 
@@ -208,10 +209,22 @@ if __name__ == '__main__':
 
 #### bug fix
 
-- fix an issue casing not adding new process to pool until all processed are done in current pool
+- fixed an issue casing not adding new process to pool until all processed are done in current pool
 
 feel free to check source code in <a href="https://github.com/guangyu-he/gy-multiprocessing">GitHub</a>, you are welcome
 to leave any comments.
+
+### v0.2.4
+
+#### feature
+
+- a silent mode is added to multiprocessing which is possible not showing messages in console
+- solved multiprocessing not going to the end when there are internal error exceptions in input function
+- solved multiprocessing not going to the end when there are missing queue.put() method in input function
+
+#### improvement
+
+- simplified duplicated codes
 
 2022&copy;Guangyu He, for further support please contact author. <br>
 Email: <a href="mailto:me@heguangyu.net">me@heguangyu.net</a>

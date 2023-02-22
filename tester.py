@@ -8,12 +8,12 @@ def your_func(a_string: int, queue):
     # print(a_string)
     if a_string % 5 == 0:
         time.sleep(2)
+        queue.put(a_string)
     else:
-        # pass
-        raise Exception("stupid")
+        pass
+        # raise Exception("stupid")
 
     # NOTE! This is a MUST-have line, or the multi_processing will not end!!!
-    queue.put(a_string)
 
 
 if __name__ == '__main__':
