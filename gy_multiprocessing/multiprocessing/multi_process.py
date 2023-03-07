@@ -1,7 +1,12 @@
+# loading multiprocessing package
 from multiprocessing import Process, cpu_count, get_context
+
+# importing relevant types
 from multiprocessing.context import Process as ProcessType
-import time
 from types import FunctionType, MethodType
+
+# importing necessary modules
+import time
 import warnings
 
 
