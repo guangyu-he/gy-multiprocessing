@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="gy_multiprocessing",
-    version="0.2.4",
+    version="0.2.4.1",
     author="Guangyu He",
     author_email="me@heguangyu.net",
     description="Run function in multiple processes",
