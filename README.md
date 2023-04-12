@@ -219,7 +219,7 @@ if __name__ == '__main__':
 - solved multiprocessing not going to the end when there are internal error exceptions in input function
 - solved multiprocessing not going to the end when there are missing queue.put() method in input function
 
-### v0.2.4.1
+### v0.2.4.1 & v0.2.4.2
 
 #### bug fix
 

@@ -7,7 +7,7 @@ with open(this_directory / "README.md", encoding="utf-8") as f:
 
 setup(
     name="gy_multiprocessing",
-    version="0.2.4.1",
+    version="0.2.4.2",
     author="Guangyu He",
     author_email="me@heguangyu.net",
     description="Run function in multiple processes",
