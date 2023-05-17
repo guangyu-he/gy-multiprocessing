@@ -32,8 +32,8 @@ pip install gy-multiprocessing
 ### Multi Processing
 
 ```python
-import gy_multiprocessing.multiprocessing.multi_process as gymp
 import time
+import gy_multiprocessing as gymp
 
 
 def your_func(a_string: int, queue):
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 ### Multi Threads
 
 ```python
-import gy_multiprocessing.multithreading.multi_thread as gymt
+import gy_multiprocessing as gymp
 import time
 
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     # the default max_threads are your cpu max cores number - 1
     # max_threads can not larger than your cpu max core number
     """
-    mt = gymt.MultiThread(max_threads=4)
+    mt = gymp.MultiThread(max_threads=4)
 
     # example for multithreading in the loop
     outer_loop_times = 5
@@ -142,8 +142,7 @@ If you want to use such structure, based on your needs, considering using sub-mu
 multiprocessing structure.
 
 ```python
-import gy_multiprocessing.multiprocessing.multi_process as gymp
-import gy_multiprocessing.multithreading.multi_thread as gymt
+import gy_multiprocessing as gymp
 
 
 def your_sub_func(b_string: int, queue=None):
@@ -158,7 +157,7 @@ def your_sub_func(b_string: int, queue=None):
 def your_mt_func(a_string: int, queue):
     # multithreading in multiprocessing structure
 
-    mt = gymt.MultiThread()
+    mt = gymp.MultiThread()
     for current_loop_index in range(a_string):
         # your running arguments, must be tuple
         args = (current_loop_index,)
@@ -228,6 +227,13 @@ if __name__ == '__main__':
 #### improvement
 
 - simplified duplicated codes
+
+### v0.2.4.3
+
+#### updates
+
+- package import improvement. **PLEASE UPDATE IMPORT AS EXAMPLES ABOVE**
+- check a boolean type input argument
 
 ## Support
 
