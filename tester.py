@@ -1,5 +1,6 @@
-import gy_multiprocessing.multiprocessing.multi_process as gymp
 import time
+
+import gy_multiprocessing as gymp
 
 
 def your_func(a_string: int, queue):

@@ -1,6 +1,4 @@
-import gy_multiprocessing.multiprocessing
-import gy_multiprocessing.multithreading
+from gy_multiprocessing.multiprocessing.multi_process import MultiProcess
+from gy_multiprocessing.multithreading.multi_thread import MultiThread
 
-
-def hello_world() -> None:
-    print("Hello world!")
+__all__ = [MultiProcess, MultiThread]

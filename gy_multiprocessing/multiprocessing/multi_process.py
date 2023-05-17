@@ -25,9 +25,11 @@ class MultiProcess:
         if type(max_process) is not int:
             raise TypeError(f"Wrong type of max process '{max_process}', must be an integer!")
         if max_process == 0:
-            raise IndexError("max process are set to be 0!")
+            raise IndexError("max process can not be 0!")
         if max_process > cpu_count():
             warnings.warn("too much sub processes, performance may get influenced!")
+        if isinstance(silent, bool) is False:
+            raise TypeError(f"Wrong type of silent '{silent}', must be a boolean!")
 
         # set max processing pool equals to the cpu core number
         self.max_process: int = max_process
