@@ -8,13 +8,14 @@ def your_func(a_string: int, queue):
 
     # print(a_string)
     if a_string % 5 == 0:
-        time.sleep(2)
-        queue.put(a_string)
+        raise Exception("stupid")
+    if a_string % 7 == 0:
+        time.sleep(5)
     else:
-        pass
-        # raise Exception("stupid")
+        time.sleep(2)
 
     # NOTE! This is a MUST-have line, or the multi_processing will not end!!!
+    queue.put(a_string)
 
 
 if __name__ == '__main__':
@@ -26,7 +27,7 @@ if __name__ == '__main__':
     # the default max_process are your cpu max cores
     # max_process could be infinite, but performance will get suffered when the hardware is overloaded
     """
-    mp = gymp.MultiProcess(max_process=8, silent=True)
+    mp = gymp.MultiProcess(max_process=10)
 
     # example for multiprocessing in the loop
     outer_loop_times = 10

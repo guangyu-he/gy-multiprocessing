@@ -76,40 +76,59 @@ class MultiProcess:
 
     def each_process_func(self, list_of_processes: list) -> list:
         for processing_index, each_processing_process in enumerate(list_of_processes):
-            if not each_processing_process['process'].is_alive():
 
-                # check each process
-                current_time = time.time()
-                time_cost = current_time - each_processing_process['start_time']
+            # check each process
+            current_time = time.time()
+            time_cost = current_time - each_processing_process['start_time']
 
-                # initialize the result
-                get_result = None
+            # initialize the result
+            get_result = None
 
-                if each_processing_process['process'].exitcode == 1:
-                    # means there is an error occurred in this process
-                    get_result = f"{each_processing_process['process_name'] + ' '}FAILED"
-                    each_processing_process['process'].kill()
-                else:
-                    try:
-                        # if the process is not alive, use a small timeout to see if there is a valid non-empty queue
-                        get_result = each_processing_process['process_result'].get(timeout=0.05)
-                    except Exception as e:
-                        if repr(e) == "Empty()":
-                            self.has_queue_put = False
-                            get_result = None
-
-                if not self.silent:
-                    print(
-                        f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
-                        if each_processing_process['process_name'] != "" \
-                        else print(
-                        f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
-
-                # remove the stopped task from processing list
+            if each_processing_process['process'].exitcode is None:
+                # the process is still alive
+                continue
+            elif each_processing_process['process'].exitcode == 1:
+                # means there is an error occurred in this process
+                get_result = f"{each_processing_process['process_name'] + ' '}FAILED"
+            elif each_processing_process['process'].exitcode == 0:
+                # the process is done successfully
+                try:
+                    # if the process is not alive, use a small timeout to see if there is a valid non-empty queue
+                    get_result = each_processing_process['process_result'].get(timeout=0.05)
+                except Exception as e:
+                    if repr(e) == "Empty()":
+                        self.has_queue_put = False
+                        get_result = None
+            else:
+                # the process is done with an unknown error
+                # shutdown the process and raise an error
+                each_processing_process['process'].kill()
                 list_of_processes.pop(processing_index)
-                for process_index, each_process in enumerate(self.mp_pool_list):
-                    if each_processing_process['process'].name == each_process['process'].name:
-                        self.mp_pool_list[process_index]['process_result'] = get_result
+                raise Exception(f"Unknown error occurred in process: {each_processing_process['process'].name}")
+
+            if not self.silent:
+                print(
+                    f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
+                    if each_processing_process['process_name'] != "" \
+                    else print(
+                    f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
+
+            # saving the result into the full process list, corresponding to the process name
+            for process_index, each_process in enumerate(self.mp_pool_list):
+                if each_processing_process['process'].name == each_process['process'].name:
+                    self.mp_pool_list[process_index]['process_result'] = get_result
+
+            # as long as the process is done, kill it
+            each_processing_process['process'].kill()
+
+            # remove the stopped task from processing list
+            list_of_processes.pop(processing_index)
+
+            # everytime the loop find a finished process, break the loop and return the list
+            # then let the outer while loop to check if there is any process left
+            # if there is still process alive, the outer while loop will continue give process to
+            # the internal for loop
+            break
 
         return list_of_processes
 
@@ -133,7 +152,6 @@ class MultiProcess:
                 each_process['process'].start()
 
             while processing_list:
-                time.sleep(0.05)
                 processing_list = self.each_process_func(processing_list)
 
         else:
@@ -151,8 +169,6 @@ class MultiProcess:
                         # if all tasks are in the pool then wait until all tasks are finished
                         # or break the loop to add a new task in the pool
                         break
-                    else:
-                        time.sleep(0.05)
 
                     processing_list = self.each_process_func(processing_list)
 
