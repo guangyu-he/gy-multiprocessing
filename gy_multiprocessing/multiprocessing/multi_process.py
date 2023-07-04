@@ -7,6 +7,7 @@ from types import FunctionType, MethodType
 
 # importing necessary modules
 import time
+import inspect
 import warnings
 
 
@@ -25,7 +26,7 @@ class MultiProcess:
         if type(max_process) is not int:
             raise TypeError(f"Wrong type of max process '{max_process}', must be an integer!")
         if max_process == 0:
-            raise IndexError("max process can not be 0!")
+            print(f"max process is set to 0: multiprocessing will not be used.")
         if max_process > cpu_count():
             warnings.warn("too much sub processes, performance may get influenced!")
         if isinstance(silent, bool) is False:
@@ -37,10 +38,50 @@ class MultiProcess:
         # show log in console
         self.silent: bool = silent
 
+        # see if there is a queue object in user function parameters
+        self.has_queue_param: bool = True
+
         # see if there is a valid queue.put() method
         self.has_queue_put: bool = True
 
+        # use to store the multiprocessing processes
         self.mp_pool_list: list[dict] = []
+
+        # use to store the result from each process when multiprocessing is not used
+        self.non_mp_result: list = []
+
+    class _NoneQueue:
+        """
+        A class to replace queue when multiprocessing is not used, and avoid error when calling queue.put()
+        """
+
+        def put(*args):
+            pass
+
+    def test(self, func, args: tuple) -> bool:
+        """
+        Testing the function and arguments to see if they are suitable for multiprocessing
+        Args:
+            func (function): the function to be called
+            args (tuple): the arguments to be passed to the function
+        Returns:
+            bool: whether the function and arguments are suitable for multiprocessing
+        """
+        test_passed: bool = True
+
+        if not isinstance(func, FunctionType) and not isinstance(func, MethodType):
+            print("Wrong type of func, must be a FunctionType!")
+            test_passed = False
+        if not isinstance(args, tuple):
+            print("Wrong type of args, must be a tuple!")
+            test_passed = False
+
+        parameters = inspect.signature(func).parameters
+        if "queue" not in parameters and self.max_process > 0:
+            print(f"queue parameter not found in '{func.__name__}'")
+            test_passed = False
+
+        return test_passed
 
     def add(self, func, args: tuple, process_name: str = ""):
         """
@@ -63,16 +104,50 @@ class MultiProcess:
         if not isinstance(process_name, str):
             raise TypeError("Wrong type of process name, must be a str!")
 
-        # a get context method for get return value
-        # NOTE! a q.put() method must include in the called func and its args
-        queue_instance = get_context('spawn').Queue()
+        # check if there is a queue parameter in the user function
+        parameters = inspect.signature(func).parameters
+        if "queue" not in parameters:
+            self.has_queue_param = False
 
-        # initialize multiprocessing for core loop function
-        process: ProcessType = Process(target=func, args=args + (queue_instance,))
-        # set dict inside the process list
-        process_list_dict: dict = {'process': process, 'start_time': int, 'process_result': queue_instance,
-                                   'process_name': process_name}
-        self.mp_pool_list.append(process_list_dict)
+        if self.max_process == 0:
+            # if max process is set to 0, multiprocessing will not be used
+
+            # initialize time and result
+            current_time = time.time()
+
+            if self.has_queue_param:
+                # there is queue parameter in the func, but multiprocessing is not used
+                # then set up a fake queue object to avoid error when calling queue.put()
+                args = args + (self._NoneQueue,)
+
+            # execute the function
+            get_result = func(*args)
+
+            # store the result from the function
+            self.non_mp_result.append(get_result)
+
+            time_cost = time.time() - current_time
+            if not self.silent:
+                if process_name != "":
+                    process_name = f"process: '{process_name}'"
+                else:
+                    process_name = "process"
+                print(
+                    f"{process_name} done in {format(time_cost, '.1f')}s with result {get_result}")
+        else:
+            if not self.test(func, args):
+                raise Exception("Function and arguments are not suitable for multiprocessing!")
+
+            # a get context method for get return value
+            # NOTE! a q.put() method must include in the called func and its args
+            queue_instance = get_context('spawn').Queue()
+
+            # initialize multiprocessing for core loop function
+            process: ProcessType = Process(target=func, args=args + (queue_instance,))
+            # set dict inside the process list
+            process_list_dict: dict = {'process': process, 'start_time': int, 'process_result': queue_instance,
+                                       'process_name': process_name}
+            self.mp_pool_list.append(process_list_dict)
 
     def each_process_func(self, list_of_processes: list) -> list:
         for processing_index, each_processing_process in enumerate(list_of_processes):
@@ -96,8 +171,7 @@ class MultiProcess:
                     get_result = each_processing_process['process_result'].get(timeout=0.05)
                 except Exception as e:
                     if repr(e) == "Empty()":
-                        # script finds a null queue object, may be caused by no queue input in the user function
-                        # or no queue.put() method in the user function
+                        # script finds no queue.put() method in the user function
                         self.has_queue_put = False
                         get_result = None
             elif each_processing_process['process'].exitcode == 1:
@@ -112,10 +186,10 @@ class MultiProcess:
 
             if not self.silent:
                 print(
-                    f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
+                    f"process: {str(each_processing_process['process'].name)} done in {format(time_cost, '.1f')}s with {each_processing_process['process_name']} and result {get_result}") \
                     if each_processing_process['process_name'] != "" \
                     else print(
-                    f"process: {str(each_processing_process['process'].name)} done in: {format(time_cost, '.1f')}s with result {get_result}")
+                    f"process: {str(each_processing_process['process'].name)} done in {format(time_cost, '.1f')}s with result {get_result}")
 
             # saving the result into the full process list, corresponding to the process name
             for process_index, each_process in enumerate(self.mp_pool_list):
@@ -144,39 +218,44 @@ class MultiProcess:
         Run all the processes
         """
 
-        # initializing a processing list with max length of max_process
-        processing_list: list = []
-
-        if len(self.mp_pool_list) <= self.max_process:
-            # if the number of tasks is less than max_process number
-            for process_index, each_process in enumerate(self.mp_pool_list):
-                # put all tasks in the pool
-                processing_list.append(each_process)
-                each_process['start_time'] = time.time()
-                each_process['process'].start()
-
-            while processing_list:
-                processing_list = self.each_process_func(processing_list)
+        if self.max_process == 0:
+            # not using multiprocessing at all
+            return self.non_mp_result
 
         else:
-            # if the number of tasks is more than max_process number
-            for pool_index, each_process in enumerate(self.mp_pool_list):
-                if len(processing_list) < self.max_process:
-                    # if there is less than max_process number of tasks in the pool
-                    # add a new task in it
+            # initializing a processing list with max length of max_process
+            processing_list: list = []
+
+            if len(self.mp_pool_list) <= self.max_process:
+                # if the number of tasks is less than max_process number
+                for process_index, each_process in enumerate(self.mp_pool_list):
+                    # put all tasks in the pool
                     processing_list.append(each_process)
                     each_process['start_time'] = time.time()
                     each_process['process'].start()
+
                 while processing_list:
-
-                    if len(processing_list) < self.max_process and pool_index != len(self.mp_pool_list) - 1:
-                        # if all tasks are in the pool then wait until all tasks are finished
-                        # or break the loop to add a new task in the pool
-                        break
-
                     processing_list = self.each_process_func(processing_list)
 
-        if not self.has_queue_put:
-            warnings.warn("You may miss the queue.put() method in your function. The results may not correct!")
+            else:
+                # if the number of tasks is more than max_process number
+                for pool_index, each_process in enumerate(self.mp_pool_list):
+                    if len(processing_list) < self.max_process:
+                        # if there is less than max_process number of tasks in the pool
+                        # add a new task in it
+                        processing_list.append(each_process)
+                        each_process['start_time'] = time.time()
+                        each_process['process'].start()
+                    while processing_list:
 
-        return [res['process_result'] for res in self.mp_pool_list]
+                        if len(processing_list) < self.max_process and pool_index != len(self.mp_pool_list) - 1:
+                            # if all tasks are in the pool then wait until all tasks are finished
+                            # or break the loop to add a new task in the pool
+                            break
+
+                        processing_list = self.each_process_func(processing_list)
+
+            if not self.has_queue_put:
+                warnings.warn("You may miss the queue.put() method in your function. The results may not correct!")
+
+            return [res['process_result'] for res in self.mp_pool_list]
