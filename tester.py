@@ -17,6 +17,8 @@ def your_func(a_string: int, queue):
     # NOTE! This is a MUST-have line, or the multi_processing will not end!!!
     queue.put(a_string)
 
+    return a_string
+
 
 if __name__ == '__main__':
     # the multiprocessing must work in a function or entrance
@@ -31,6 +33,10 @@ if __name__ == '__main__':
 
     # example for multiprocessing in the loop
     outer_loop_times = 10
+
+    # NEW! test if your func is working for multiprocessing
+    test_func: bool = mp.test(your_func, (1,))
+
     for current_loop_index in range(outer_loop_times):
         # your running arguments, must be tuple
         args = (current_loop_index,)
