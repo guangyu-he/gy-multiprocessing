@@ -25,8 +25,6 @@ class MultiProcess:
         # error handling
         if type(max_process) is not int:
             raise TypeError(f"Wrong type of max process '{max_process}', must be an integer!")
-        if max_process == 0:
-            print(f"max process is set to 0: multiprocessing will not be used.")
         if max_process > cpu_count():
             warnings.warn("too much sub processes, performance may get influenced!")
         if isinstance(silent, bool) is False:
@@ -37,6 +35,9 @@ class MultiProcess:
 
         # show log in console
         self.silent: bool = silent
+
+        if max_process == 0 and not self.silent:
+            print(f"max process is set to 0: multiprocessing will not be used.")
 
         # see if there is a queue object in user function parameters
         self.has_queue_param: bool = True
