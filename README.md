@@ -37,14 +37,18 @@ import gy_multiprocessing as gymp
 
 
 def your_func(a_string: int, queue):
-    # NOTE! you MUST add an argument for queue and use put() method to fetch the returning value
+    # NEW from v0.3! if multiprocessing is not used, queue is not a necessary parameter
+    # NOTE! you MUST add an argument for queue and use put() method to fetch the returning value if multiprocessing is used
 
     print(a_string)
     if a_string % 5 == 0:
         time.sleep(2)
 
-    # NOTE! if you are missing this method, there will be None result returned for current process
+    # NEW from v0.3! if multiprocessing is not used, all queue relevant codes can still be kept
+    # NEW from v0.3! and the if queue is not None: is not necessary anymore
+    # NOTE! if you are missing this method, there will be None result returned for current process if multiprocessing is used
     queue.put(a_string)
+    return a_string
 
 
 if __name__ == '__main__':
@@ -56,10 +60,16 @@ if __name__ == '__main__':
     # the default max_process are your cpu max cores
     # max_process could be infinite, but performance will get suffered when the hardware is overloaded
     """
+
+    # NEW from v0.3! set max_process to 0 will disable multiprocessing
     mp = gymp.MultiProcess(max_process=8)
 
     # example for multiprocessing in the loop
     outer_loop_times = 5
+
+    # NEW from v0.3! it is possible to test beforehand if the function and args is suitable for multiprocessing
+    test_your_func: bool = mp.test(your_func, (1,))
+
     for current_loop_index in range(outer_loop_times):
         # your running arguments, must be tuple
         args = (current_loop_index,)
@@ -234,6 +244,15 @@ if __name__ == '__main__':
 
 - package import improvement. **PLEASE UPDATE IMPORT AS EXAMPLES ABOVE**
 - check a boolean type input argument
+
+### v0.3
+
+#### feature
+
+- added a test method to check if the function and args is suitable for multiprocessing
+- added a max_process=0 possibility to disable multiprocessing
+- queue parameter in user function has a more flexibility to be used among multiprocessing mode on and off
+- a new multiprocessing pool logic to check if the subprocess is done
 
 ## Support
 
