@@ -87,9 +87,8 @@ class MultiProcess:
             if each_processing_process['process'].exitcode is None:
                 # the process is still alive
                 continue
-            elif each_processing_process['process'].exitcode == 1:
-                # means there is an error occurred in this process
-                get_result = f"{each_processing_process['process_name'] + ' '}FAILED"
+
+            # the following code is for the process is done
             elif each_processing_process['process'].exitcode == 0:
                 # the process is done successfully
                 try:
@@ -97,8 +96,13 @@ class MultiProcess:
                     get_result = each_processing_process['process_result'].get(timeout=0.05)
                 except Exception as e:
                     if repr(e) == "Empty()":
+                        # script finds a null queue object, may be caused by no queue input in the user function
+                        # or no queue.put() method in the user function
                         self.has_queue_put = False
                         get_result = None
+            elif each_processing_process['process'].exitcode == 1:
+                # means there is an error occurred in this process
+                get_result = f"{each_processing_process['process_name'] + ' '}FAILED"
             else:
                 # the process is done with an unknown error
                 # shutdown the process and raise an error
